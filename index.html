@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Наша История ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Montserrat:wght@300;400;600&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 50%, #fff5f7 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #4a2c3a;
+            overscroll-behavior: none;
+        }
+
+        /* Парольный экран */
+        #password-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffc0cb 50%, #ffe4e1 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        #password-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .password-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 42px;
+            color: #d63384;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(214, 51, 132, 0.2);
+        }
+
+        .password-subtitle {
+            font-size: 15px;
+            color: #a0527c;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+            line-height: 1.5;
+        }
+
+        .password-display {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .password-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #d63384;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .password-dot.filled {
+            background: #d63384;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(214, 51, 132, 0.5);
+        }
+
+        .password-dot.error {
+            border-color: #dc3545;
+            background: #dc3545;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* КВАДРАТНЫЕ КНОПКИ НАМПАДА */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 70px);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .numpad-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            border: 2px solid rgba(214, 51, 132, 0.3);
+            background: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            font-weight: 600;
+            color: #d63384;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 8px rgba(214, 51, 132, 0.1);
+        }
+
+        .numpad-btn:active {
+            transform: scale(0.95);
+            background: #d63384;
+            color: white;
+            box-shadow: 0 0 15px rgba(214, 51, 132, 0.4);
+        }
+
+        .numpad-btn:hover {
+            background: rgba(214, 51, 132, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(214, 51, 132, 0.2);
+        }
+
+        .numpad-btn.delete {
+            font-size: 20px;
+            background: rgba(255, 200, 200, 0.3);
+        }
+
+        .password-hint {
+            font-size: 13px;
+            color: #a0527c;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+
+        .error-msg {
+            margin-top: 10px;
+            color: #dc3545;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            height: 20px;
+        }
+
+        .error-msg.show {
+            opacity: 1;
+        }
+
+        /* Записочка */
+        .letter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            padding: 15px;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .letter-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .letter-paper {
+            background: linear-gradient(135deg, #fffef5 0%, #fff8e7 100%);
+            padding: 45px 35px;
+            border-radius: 5px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 
+                0 1px 1px rgba(0,0,0,0.1),
+                0 10px 40px rgba(0,0,0,0.25);
+            position: relative;
+            transform: rotate(-0.5deg);
+            animation: letterAppear 0.7s ease;
+            max-height: 85vh;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+
+        @keyframes letterAppear {
+            0% { transform: scale(0.5) rotate(-3deg); opacity: 0; }
+            100% { transform: scale(1) rotate(-0.5deg); opacity: 1; }
+        }
+
+        .letter-paper::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 22px;
+            background: #ff6b9d;
+            opacity: 0.5;
+            border-radius: 3px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .letter-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .letter-emoji {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .letter-to {
+            font-family: 'Great Vibes', cursive;
+            font-size: 28px;
+            color: #d63384;
+        }
+
+        .letter-body {
+            font-family: 'Caveat', cursive;
+            font-size: 22px;
+            color: #5a3a2a;
+            line-height: 1.9;
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .letter-body p {
+            margin-bottom: 15px;
+            text-indent: 20px;
+        }
+
+        .letter-signature {
+            text-align: right;
+            font-family: 'Great Vibes', cursive;
+            font-size: 24px;
+            color: #d63384;
+            margin-top: 20px;
+        }
+
+        .letter-close {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .letter-close-btn {
+            background: linear-gradient(135deg, #d63384, #ff69b4);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(214, 51, 132, 0.3);
+        }
+
+        .letter-close-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(214, 51, 132, 0.4);
+        }
+
+        /* 2D цветы в фоне */
+        .flowers-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .flower {
+            position: absolute;
+            font-size: 24px;
+            animation: flowerFloat linear infinite;
+            opacity: 0.5;
+            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.1));
+        }
+
+        @keyframes flowerFloat {
+            0% {
+                transform: translateY(-50px) rotate(0deg) scale(0.8);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Главный контент */
+        .main-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Заголовок */
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before,
+        .hero-section::after {
+            content: '🌸';
+            position: absolute;
+            font-size: 30px;
+            opacity: 0.3;
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+
+        .hero-section::before {
+            top: 15px;
+            left: 20px;
+        }
+
+        .hero-section::after {
+            bottom: 15px;
+            right: 20px;
+            animation-delay: 2s;
+        }
+
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .hero-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 56px;
+            color: #d63384;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(214, 51, 132, 0.2);
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: #a0527c;
+            font-weight: 300;
+        }
+
+        /* Таймер */
+        .timer-section {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-section::before {
+            content: '✨ 💕 ✨';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            opacity: 0.4;
+            letter-spacing: 10px;
+        }
+
+        .timer-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: #d63384;
+            margin-bottom: 25px;
+        }
+
+        .timer-date {
+            font-size: 16px;
+            color: #a0527c;
+            margin-bottom: 30px;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .timer-box {
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            border-radius: 16px;
+            padding: 20px 10px;
+            border: 2px solid rgba(214, 51, 132, 0.2);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .timer-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .timer-box::after {
+            content: '🌷';
+            position: absolute;
+            top: -8px;
+            right: -5px;
+            font-size: 16px;
+            opacity: 0.4;
+        }
+
+        .timer-number {
+            font-size: 36px;
+            font-weight: 600;
+            color: #d63384;
+            display: block;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #a0527c;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+
+        /* История */
+        .story-section {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            position: relative;
+        }
+
+        .story-section::before {
+            content: '🌺';
+            position: absolute;
+            top: -15px;
+            right: 30px;
+            font-size: 30px;
+            opacity: 0.5;
+            animation: gentleFloat 5s ease-in-out infinite;
+        }
+
+        .story-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: #d63384;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #d63384, #ff69b4, #ffb6c1);
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 240, 245, 0.8);
+            border-radius: 16px;
+            border-left: 4px solid #d63384;
+            transition: transform 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(10px);
+        }
+
+        .timeline-item::before {
+            content: '💕';
+            position: absolute;
+            left: -52px;
+            top: 20px;
+            font-size: 20px;
+        }
+
+        .timeline-date {
+            font-size: 14px;
+            color: #d63384;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-text {
+            font-size: 16px;
+            color: #4a2c3a;
+            line-height: 1.6;
+        }
+
+        /* Галерея воспоминаний */
+        .memories-section {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            position: relative;
+        }
+
+        .memories-section::before {
+            content: '🌹';
+            position: absolute;
+            top: -12px;
+            left: 30px;
+            font-size: 28px;
+            opacity: 0.5;
+            animation: gentleFloat 4s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        .memories-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: #d63384;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .memory-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .memory-card {
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            border: 2px solid rgba(214, 51, 132, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .memory-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(214, 51, 132, 0.2);
+        }
+
+        .memory-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d63384, #ff69b4, #ffb6c1);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .memory-emoji {
+            font-size: 40px;
+            margin-bottom: 15px;
+            display: block;
+            animation: gentleFloat 3s ease-in-out infinite;
+        }
+
+        .memory-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #d63384;
+            margin-bottom: 8px;
+        }
+
+        .memory-desc {
+            font-size: 14px;
+            color: #a0527c;
+            line-height: 1.5;
+        }
+
+        /* Почему я люблю тебя */
+        .reasons-section {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.15);
+            border: 1px solid rgba(255, 182, 193, 0.3);
+            position: relative;
+        }
+
+        .reasons-section::before {
+            content: '💐';
+            position: absolute;
+            top: -15px;
+            right: 40px;
+            font-size: 32px;
+            opacity: 0.5;
+            animation: gentleFloat 5s ease-in-out infinite;
+            animation-delay: 1.5s;
+        }
+
+        .reasons-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 36px;
+            color: #d63384;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .reasons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .reason-item {
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            border: 2px solid rgba(214, 51, 132, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .reason-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(214, 51, 132, 0.15);
+        }
+
+        .reason-item::before {
+            content: '🌸';
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 14px;
+            opacity: 0.3;
+        }
+
+        .reason-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #d63384;
+            margin-bottom: 8px;
+        }
+
+        .reason-text {
+            font-size: 14px;
+            color: #a0527c;
+            line-height: 1.5;
+        }
+
+        /* Сообщение */
+        .message-section {
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            border-radius: 30px;
+            padding: 50px 40px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(214, 51, 132, 0.2);
+            border: 2px solid rgba(214, 51, 132, 0.2);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .message-section::before,
+        .message-section::after {
+            content: '🌷';
+            position: absolute;
+            font-size: 35px;
+            opacity: 0.25;
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+
+        .message-section::before {
+            top: 10px;
+            left: 15px;
+        }
+
+        .message-section::after {
+            bottom: 10px;
+            right: 15px;
+            animation-delay: 2s;
+        }
+
+        .message-text {
+            font-family: 'Great Vibes', cursive;
+            font-size: 32px;
+            color: #d63384;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .message-signature {
+            font-size: 18px;
+            color: #a0527c;
+            font-style: italic;
+        }
+
+        /* Кнопка письма в конце */
+        .letter-btn-section {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .letter-btn-section::before {
+            content: '✨ 🌸 ✨';
+            display: block;
+            margin-bottom: 15px;
+            font-size: 16px;
+            opacity: 0.5;
+            letter-spacing: 8px;
+        }
+
+        .open-letter-btn {
+            display: inline-block;
+            padding: 20px 50px;
+            background: linear-gradient(135deg, #d63384, #ff69b4);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 22px;
+            font-family: 'Great Vibes', cursive;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(214, 51, 132, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .open-letter-btn::before {
+            content: '💌';
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .open-letter-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 12px 35px rgba(214, 51, 132, 0.4);
+        }
+
+        .open-letter-btn:active {
+            transform: scale(0.97);
+        }
+
+        .letter-btn-hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #a0527c;
+            opacity: 0.7;
+        }
+
+        /* Футер */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #a0527c;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .footer::before {
+            content: '🌸 💕 🌸';
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            opacity: 0.4;
+        }
+
+        .footer-hearts {
+            font-size: 24px;
+            margin-bottom: 10px;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            .hero-title { font-size: 36px; }
+            .timer-grid { grid-template-columns: repeat(2, 1fr); }
+            .timer-number { font-size: 28px; }
+            .story-title, .memories-title, .timer-title, .reasons-title { font-size: 28px; }
+            .message-text { font-size: 24px; }
+            .timeline { padding-left: 30px; }
+            .timeline-item::before { left: -42px; }
+            .numpad { grid-template-columns: repeat(3, 60px); gap: 8px; }
+            .numpad-btn { width: 60px; height: 60px; font-size: 20px; border-radius: 10px; }
+            .password-display { gap: 10px; }
+            .password-dot { width: 15px; height: 15px; }
+            .letter-body { font-size: 19px; }
+            .letter-paper { padding: 35px 25px; }
+            .reasons-grid { grid-template-columns: repeat(2, 1fr); }
+            .open-letter-btn { padding: 16px 35px; font-size: 20px; border-radius: 10px; }
+        }
+
+        /* Плавное появление элементов */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Эффект при касании (Ripple) */
+        .touch-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(214, 51, 132, 0.2);
+            transform: scale(0);
+            animation: ripple 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- Парольный экран -->
+    <div id="password-screen">
+        <div class="lock-icon">🔒</div>
+        <div class="password-title">Наша тайная страничка</div>
+
+        <div class="password-display" id="password-display">
+            <div class="password-dot" data-index="0"></div>
+            <div class="password-dot" data-index="1"></div>
+            <div class="password-dot" data-index="2"></div>
+            <div class="password-dot" data-index="3"></div>
+        </div>
+
+        <div class="numpad">
+            <button class="numpad-btn" data-num="1">1</button>
+            <button class="numpad-btn" data-num="2">2</button>
+            <button class="numpad-btn" data-num="3">3</button>
+            <button class="numpad-btn" data-num="4">4</button>
+            <button class="numpad-btn" data-num="5">5</button>
+            <button class="numpad-btn" data-num="6">6</button>
+            <button class="numpad-btn" data-num="7">7</button>
+            <button class="numpad-btn" data-num="8">8</button>
+            <button class="numpad-btn" data-num="9">9</button>
+            <button class="numpad-btn delete" data-action="delete">⌫</button>
+            <button class="numpad-btn" data-num="0">0</button>
+            <button class="numpad-btn delete" data-action="clear">✕</button>
+        </div>
+
+        <div class="error-msg" id="error-msg">Неверный пароль, попробуй ещё раз</div>
+    </div>
+
+    <!-- Записочка -->
+    <div class="letter-overlay" id="letter-overlay">
+        <div class="letter-paper" id="letter-paper">
+            <div class="letter-header">
+                <span class="letter-emoji">💌</span>
+                <div class="letter-to">Моя дорогая Айзада</div>
+            </div>
+            <div class="letter-body">
+                <p>Сегодня твой день рождения, и я хочу, чтобы ты знала — ты самое прекрасное, что случилось в моей жизни.</p>
+
+                <p>Я помню тот вечер 16 декабря, когда мы впервые встретились. Ты пришла, и мир вокруг стал ярче, звуки — громче, а воздух — слаще. С того момента я понял: я хочу узнавать тебя всё больше и больше с каждым днём.</p>
+
+                <p>А 24 декабря... Это был день, когда две судьбы сплелись воедино. Лучший подарок, который я мог получить — это ты. С тех пор каждое утро я просыпаюсь с мыслью о тебе, а каждый вечер засыпаю, благодаря судьбу за то, что ты есть.</p>
+
+                <p>Ты делаешь меня лучше. Ты вдохновляешь меня. Ты — мой свет в самые тёмные дни и моя радость в самые светлые.</p>
+
+                <p>Я люблю твою улыбку, твой смех, твою доброту. Я люблю тебя такой, какая ты есть — со всеми твоими странностями, мечтами и надеждами.</p>
+
+                <p>С днём рождения, моя любимая. Пусть этот год принесёт тебе столько же счастья, сколько ты принесла в мою жизнь. Я обещаю быть рядом — сегодня, завтра и всегда.</p>
+
+                <p>Ты — моё всё.</p>
+            </div>
+            <div class="letter-signature">
+                С любовью,<br>
+                твой Кылыч 💕
+            </div>
+            <div class="letter-close">
+                <button class="letter-close-btn" id="letter-close-btn">Прочитано ❤️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2D Цветы в фоне -->
+    <div class="flowers-bg" id="flowers-bg"></div>
+
+    <!-- Главный контент -->
+    <div class="main-content" id="main-content">
+        <!-- Герой -->
+        <div class="hero-section fade-in">
+            <div class="hero-title">Наша История</div>
+            <div class="hero-subtitle">Каждая секунда с тобой — это маленькое чудо</div>
+        </div>
+
+        <!-- Таймер -->
+        <div class="timer-section fade-in">
+            <div class="timer-title">Мы вместе уже</div>
+            <div class="timer-grid">
+                <div class="timer-box">
+                    <span class="timer-number" id="days">0</span>
+                    <div class="timer-label">дней</div>
+                </div>
+                <div class="timer-box">
+                    <span class="timer-number" id="hours">0</span>
+                    <div class="timer-label">часов</div>
+                </div>
+                <div class="timer-box">
+                    <span class="timer-number" id="minutes">0</span>
+                    <div class="timer-label">минут</div>
+                </div>
+                <div class="timer-box">
+                    <span class="timer-number" id="seconds">0</span>
+                    <div class="timer-label">секунд</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История -->
+        <div class="story-section fade-in">
+            <div class="story-title">Как всё начиналось</div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">🎬 16 декабря 2025</div>
+                    <div class="timeline-text">
+                        День нашей первой встречи. Помню, как сильно я волновался до твоего прихода 
+                        и даже думал, что ты не придёшь. Но когда ты наконец появилась, меня сразу 
+                        отпустило — все страхи исчезли, и я просто не мог перестать улыбаться.
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">💍 24 декабря 2025</div>
+                    <div class="timeline-text">
+                        День, когда мы официально начали встречаться. 
+                        С этого дня началась наша общая история, полная любви, тепла 
+                        и самых прекрасных моментов. 💕
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Воспоминания -->
+        <div class="memories-section fade-in">
+            <div class="memories-title">Наши моменты</div>
+            <div class="memory-cards">
+                <div class="memory-card">
+                    <span class="memory-emoji">🎬</span>
+                    <div class="memory-title">Первое кино</div>
+                    <div class="memory-desc">Тот вечер, когда мир вокруг замер, и я окончательно всё понял.</div>
+                </div>
+                <div class="memory-card">
+                    <span class="memory-emoji">🫂</span>
+                    <div class="memory-title">Первые объятия</div>
+                    <div class="memory-desc">Момент, когда я ощутил твоё тепло и осознал, что ты — моя судьба.</div>
+                </div>
+                <div class="memory-card">
+                    <span class="memory-emoji">💋</span>
+                    <div class="memory-title">Первый поцелуй</div>
+                    <div class="memory-desc">Секунда, когда время остановилось, оставив нас наедине со вселенной.</div>
+                </div>
+                <div class="memory-card">
+                    <span class="memory-emoji"> 💙 </span>
+                    <div class="memory-title">Наше будущее</div>
+                    <div class="memory-desc">Самые лучшие моменты ещё впереди, и я хочу прожить их только с тобой</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Почему я люблю тебя -->
+        <div class="reasons-section fade-in">
+            <div class="reasons-title">Почему я люблю тебя</div>
+            <div class="reasons-grid">
+                <div class="reason-item">
+                    <div class="reason-number">01</div>
+                    <div class="reason-text">Рядом с тобой я могу быть собой и не притворяться.</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">02</div>
+                    <div class="reason-text">Ты умеешь искренне поддерживать, даже когда я ошибаюсь.</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">03</div>
+                    <div class="reason-text">С тобой легко и спокойно обсуждать любые, даже сложные темы.</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">04</div>
+                    <div class="reason-text">Ты даёшь мне ощущение надёжного тыла, что бы ни происходило вокруг.</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">05</div>
+                    <div class="reason-text">Я уверен в твоей честности и знаю, что могу тебе доверять.</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">06</div>
+                    <div class="reason-text">Ты — мой дом, куда я всегда хочу возвращаться</div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-number">07</div>
+                    <div class="reason-text">Мне спокойно за наше будущее, когда мы строим общие планы.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Сообщение -->
+        <div class="message-section fade-in">
+            <div class="message-text">
+                С днём рождения, моя любимая <br>
+                ❤️Айзада!❤️<br>
+                Ты — самое прекрасное, что случилось со мной.<br>
+                Я люблю тебя больше, чем вчера, но меньше, чем завтра.
+            </div>
+            <div class="message-signature">— Твой Любимый 💕</div>
+        </div>
+
+        <!-- Кнопка письма в самом конце -->
+        <div class="letter-btn-section fade-in">
+            <button class="open-letter-btn" id="open-letter-btn">
+                Прочитать письмо от Кылыча
+            </button>
+            <div class="letter-btn-hint">Нажми, чтобы открыть особенное послание</div>
+        </div>
+
+        <!-- Футер -->
+        <div class="footer">
+            <div class="footer-hearts">К❤️А</div>
+            <div>Создано с любовью Кылычем для Айзады | 2026</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ЗАПРЕТ КОПИРОВАНИЯ ====================
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+        document.addEventListener('cut', e => e.preventDefault());
+        document.addEventListener('dragstart', e => e.preventDefault());
+
+        // Блокировка свайпа и скролла на парольном экране
+        const passwordScreen = document.getElementById('password-screen');
+
+        function preventScroll(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        passwordScreen.addEventListener('touchmove', preventScroll, { passive: false });
+        passwordScreen.addEventListener('wheel', preventScroll, { passive: false });
+        passwordScreen.addEventListener('scroll', preventScroll, { passive: false });
+
+        // Блокировка клавиш
+        document.addEventListener('keydown', function(e) {
+            if (passwordScreen.classList.contains('hidden')) return;
+
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'U') ||
+                (e.ctrlKey && e.key === 'S') ||
+                (e.ctrlKey && e.key === 'A') ||
+                (e.ctrlKey && e.key === 'C') ||
+                (e.ctrlKey && e.key === 'V') ||
+                (e.ctrlKey && e.key === 'X')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // ==================== ПАРОЛЬ ====================
+        const CORRECT_PASSWORD = '2412';
+        let currentPassword = '';
+        const dots = document.querySelectorAll('.password-dot');
+        const errorMsg = document.getElementById('error-msg');
+        const mainContent = document.getElementById('main-content');
+        const letterOverlay = document.getElementById('letter-overlay');
+
+        function updateDots() {
+            dots.forEach((dot, i) => {
+                dot.classList.remove('filled', 'error');
+                if (i < currentPassword.length) {
+                    dot.classList.add('filled');
+                }
+            });
+        }
+
+        function checkPassword() {
+            if (currentPassword === CORRECT_PASSWORD) {
+                passwordScreen.classList.add('hidden');
+                setTimeout(() => {
+                    mainContent.classList.add('visible');
+                    document.querySelectorAll('.fade-in').forEach((el, i) => {
+                        setTimeout(() => el.classList.add('visible'), i * 300);
+                    });
+                }, 500);
+            } else {
+                dots.forEach(dot => dot.classList.add('error'));
+                errorMsg.classList.add('show');
+                currentPassword = '';
+                setTimeout(() => {
+                    dots.forEach(dot => dot.classList.remove('error'));
+                    errorMsg.classList.remove('show');
+                    updateDots();
+                }, 1500);
+            }
+        }
+
+        function enterDigit(digit) {
+            if (currentPassword.length < 4) {
+                currentPassword += digit;
+                updateDots();
+                if (currentPassword.length === 4) {
+                    setTimeout(checkPassword, 200);
+                }
+            }
+        }
+
+        function deleteDigit() {
+            currentPassword = currentPassword.slice(0, -1);
+            updateDots();
+            errorMsg.classList.remove('show');
+        }
+
+        function clearPassword() {
+            currentPassword = '';
+            updateDots();
+            errorMsg.classList.remove('show');
+        }
+
+        // Кнопки нампада
+        document.querySelectorAll('.numpad-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const num = this.getAttribute('data-num');
+                const action = this.getAttribute('data-action');
+
+                if (num !== null) {
+                    enterDigit(num);
+                } else if (action === 'delete') {
+                    deleteDigit();
+                } else if (action === 'clear') {
+                    clearPassword();
+                }
+            });
+        });
+
+        // ВНЕШНЯЯ КЛАВИАТУРА
+        document.addEventListener('keydown', function(e) {
+            if (passwordScreen.classList.contains('hidden')) return;
+
+            const key = e.key;
+
+            if (key >= '0' && key <= '9') {
+                e.preventDefault();
+                enterDigit(key);
+            }
+            else if (key === 'Backspace') {
+                e.preventDefault();
+                deleteDigit();
+            }
+            else if (key === 'Escape') {
+                e.preventDefault();
+                clearPassword();
+            }
+            else if (key === 'Enter') {
+                e.preventDefault();
+                if (currentPassword.length === 4) {
+                    checkPassword();
+                }
+            }
+        });
+
+        // ==================== ЗАПИСОЧКА ====================
+        const letterCloseBtn = document.getElementById('letter-close-btn');
+        const openLetterBtn = document.getElementById('open-letter-btn');
+        const letterPaper = document.getElementById('letter-paper');
+
+        letterCloseBtn.addEventListener('click', () => {
+            letterOverlay.classList.remove('show');
+        });
+
+        openLetterBtn.addEventListener('click', () => {
+            letterOverlay.classList.add('show');
+        });
+
+        // Свайп вниз для закрытия записочки
+        let letterTouchStartY = 0;
+        let letterTouchEndY = 0;
+
+        letterPaper.addEventListener('touchstart', function(e) {
+            letterTouchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        letterPaper.addEventListener('touchend', function(e) {
+            letterTouchEndY = e.changedTouches[0].screenY;
+            handleLetterSwipe();
+        }, { passive: true });
+
+        function handleLetterSwipe() {
+            const diff = letterTouchEndY - letterTouchStartY;
+            if (diff > 80) {
+                letterOverlay.classList.remove('show');
+            }
+        }
+
+        // ==================== ТАЙМЕР ====================
+        function updateTimer() {
+            const startDate = new Date('2025-12-24T00:00:00+06:00');
+            const now = new Date();
+            const diff = now - startDate;
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // ==================== 2D ЦВЕТЫ В ФОНЕ ====================
+        const flowerEmojis = ['🌸', '🌺', '🌷', '🌹', '💐', '🌻', '🌼', '🪷'];
+
+        function createFlower() {
+            const container = document.getElementById('flowers-bg');
+            const flower = document.createElement('div');
+            flower.className = 'flower';
+            flower.textContent = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+            flower.style.left = Math.random() * 100 + '%';
+            flower.style.animationDuration = (Math.random() * 8 + 10) + 's';
+            flower.style.fontSize = (Math.random() * 12 + 14) + 'px';
+            container.appendChild(flower);
+            setTimeout(() => flower.remove(), 18000);
+        }
+
+        setInterval(createFlower, 1200);
+
+        // ==================== ЭФФЕКТ ПРИ КАСАНИИ (RIPPLE) ====================
+        function createRipple(e, element) {
+            const ripple = document.createElement('span');
+            ripple.className = 'touch-ripple';
+            const rect = element.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            element.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        }
+
+        document.querySelectorAll('.memory-card, .reason-item, .timer-box, .timeline-item, .open-letter-btn, .numpad-btn').forEach(el => {
+            el.addEventListener('click', function(e) {
+                createRipple(e, this);
+            });
+        });
+
+        // ==================== АНИМАЦИИ ПРИ СКРОЛЛЕ ====================
+        window.addEventListener('scroll', () => {
+            document.querySelectorAll('.fade-in').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.85) {
+                    el.classList.add('visible');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
